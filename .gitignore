@@ -1,0 +1,6 @@
+/data
+/data-slow
+/cache
+/.vscode
+**/__pycache__
+**/*.egg-info
