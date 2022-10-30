@@ -37,7 +37,7 @@ class ParallelFilter:
     def _get_relevant_dx(self, df):
         proc_cols = self.get_dx_cols(df.columns)
 
-        relevant = df[df[proc_cols].isin(self.all_proc_codes).any(axis="columns")]
+        relevant = df[df[proc_cols].isin(self.all_dx_codes).any(axis="columns")]
 
         return relevant
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     parallel_filter = ParallelFilter()
 
     with ProcessPoolExecutor(max_workers=16) as executor:
-        fnames = glob.glob("data-slow/*.parquet")
+        fnames = glob.glob("data/*.parquet")
         res = list(
             tqdm(
                 executor.map(parallel_filter.single_file_filter, fnames),
