@@ -1,3 +1,8 @@
+"""
+Add a boolean column for presence of diabetes based on ICD codes
+
+This is a slow step so best to do once in preprocessing
+"""
 import pandas as pd
 from nisicd.dataProcessing import get_dx_cols, dm_startswith_cods
 
@@ -17,12 +22,6 @@ if __name__ == "__main__":
 
         return False
 
-    total_dm_count = len(ssi[ssi[dx_cols].apply(get_dm, axis=1)])
-    private_dm = private_ins[private_ins[dx_cols].apply(get_dm, axis=1)]
-    selfpay_dm = selfpay_ins[selfpay_ins[dx_cols].apply(get_dm, axis=1)]
+    ssi["has_DM"] = ssi[dx_cols].apply(get_dm, axis=1)
 
-    print(f"Private DM %: {100 * len(private_dm) / len(private_ins):.2f}")
-    print(f"Selfpay DM %: {100 * len(selfpay_dm) / len(selfpay_ins):.2f}")
-
-    print(f"Private age avg: {private_ins['AGE'].mean():.2f}")
-    print(f"Selfpay age avg: {selfpay_ins['AGE'].mean():.2f}")
+    ssi.to_parquet("cache/processed.parquet", index=False)
