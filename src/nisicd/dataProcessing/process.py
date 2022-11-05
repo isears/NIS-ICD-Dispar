@@ -8,12 +8,9 @@ from nisicd.dataProcessing import get_dx_cols, dm_startswith_cods
 
 
 if __name__ == "__main__":
-    dx_cols = get_dx_cols(pd.read_parquet("cache/ssi.parquet").columns)
 
-    ssi = pd.read_parquet("cache/ssi.parquet", columns=dx_cols + ["PAY1", "AGE"])
-
-    private_ins = ssi[ssi["PAY1"] == 3]
-    selfpay_ins = ssi[ssi["PAY1"] == 4]
+    df = pd.read_parquet("cache/filtered.parquet")
+    dx_cols = get_dx_cols(df.columns)
 
     def get_dm(row):
         for c in dm_startswith_cods:
@@ -22,6 +19,6 @@ if __name__ == "__main__":
 
         return False
 
-    ssi["has_DM"] = ssi[dx_cols].apply(get_dm, axis=1)
+    df["has_DM"] = df[dx_cols].apply(get_dm, axis=1)
 
-    ssi.to_parquet("cache/processed.parquet", index=False)
+    df.to_parquet("cache/processed.parquet", index=False)
