@@ -1,0 +1,27 @@
+,N (%)
+Age mean,36.45 +/- 0.06
+AGE > 65,484 (1.21)
+APRDRG_Severity > 2,"1,883 (4.70)"
+APRDRG_Risk_Mortality > 2,664 (1.66)
+[PAY1] Self-pay,"40,033 (100.00)"
+[RACE] White,"17,044 (42.57)"
+[RACE] Hispanic,"13,494 (33.71)"
+[RACE] Black,"4,194 (10.48)"
+[RACE] Other,"2,157 (5.39)"
+[RACE] Unknown,"1,911 (4.77)"
+[RACE] Asian or Pacific Islander,"1,020 (2.55)"
+[RACE] Native American,213 (0.53)
+[SEX] Male,"24,385 (60.91)"
+[SEX] Female,"15,475 (38.66)"
+[SEX] Unknown,173 (0.43)
+[HOSP_LOCTEACH] Urban teaching,"20,135 (50.30)"
+[HOSP_LOCTEACH] Urban nonteaching,"15,200 (37.97)"
+[HOSP_LOCTEACH] Rural,"4,698 (11.74)"
+[HOSP_REGION] South,"21,211 (52.98)"
+[HOSP_REGION] West,"7,608 (19.00)"
+[HOSP_REGION] Midwest,"5,816 (14.53)"
+[HOSP_REGION] Northeast,"5,398 (13.48)"
+SSI,178 (0.44)
+PROLONGED_LOS,"6,002 (14.99)"
+DIED,25 (0.06)
+OR_RETURN,"9,227 (23.05)"

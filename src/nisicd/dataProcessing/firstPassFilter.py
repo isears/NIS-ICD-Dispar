@@ -4,7 +4,7 @@ First-pass filter to isolate thyroidectomies from RAW NIS data
 import pandas as pd
 import glob
 from nisicd import logging
-from nisicd.dataProcessing import appendicitis_codes
+from nisicd.dataProcessing import DX_CODES
 from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 import re
@@ -12,10 +12,14 @@ import os
 
 
 class ParallelFilter:
-    def __init__(self, dx_codes=[], proc_codes=[]) -> None:
+    def __init__(
+        self, dx_codes=[], dx_as_primary=False, proc_codes=[], proc_as_primary=False
+    ) -> None:
         logging.info("Initializing parallel filter...")
         self.dx_codes = dx_codes
         self.proc_codes = proc_codes
+        self.dx_as_primary = dx_as_primary
+        self.proc_as_primary = proc_as_primary
 
         self.cores_available = len(os.sched_getaffinity(0))
 
@@ -51,6 +55,9 @@ class ParallelFilter:
 
         dx_cols = self.get_dx_cols(df.columns)
 
+        if self.dx_as_primary:
+            dx_cols = [c for c in dx_cols if c in ["DX1", "I10_DX1"]]
+
         return self.__find_in_cols(df, dx_cols, self.dx_codes)
 
     def _get_relevant_proc(self, df):
@@ -58,6 +65,9 @@ class ParallelFilter:
             return df
 
         proc_cols = self.get_proc_cols(df.columns)
+
+        if self.proc_as_primary:
+            proc_cols = [c for c in proc_cols if c in ["PR1", "I10_PR1"]]
 
         return self.__find_in_cols(df, proc_cols, self.proc_codes)
 
@@ -77,13 +87,18 @@ class ParallelFilter:
         filtered_df = pd.concat(res)
         # Pyarrow (parquet) complains if this column is dealt with
         filtered_df.HOSPSTCO = filtered_df.HOSPSTCO.astype("str")
-        filtered_df.to_parquet("./cache/filtered.parquet", index=False)
+        filtered_df.to_parquet("./cache/appendicitis.parquet", index=False)
 
-        logging.info("[+] Parallel filter done")
+        logging.info(f"[+] Parallel filter done final count: {len(filtered_df)}")
 
 
 if __name__ == "__main__":
-    parallel_filter = ParallelFilter(dx_codes=appendicitis_codes)
+    dx_codes = []
+
+    for key, val in DX_CODES.items():
+        dx_codes += val
+
+    parallel_filter = ParallelFilter(dx_codes=dx_codes, dx_as_primary=True)
     fnames = glob.glob("data/*.parquet")
 
     parallel_filter.parallel_file_filter(fnames)

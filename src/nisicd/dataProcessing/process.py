@@ -1,24 +1,57 @@
 """
-Add a boolean column for presence of diabetes based on ICD codes
-
-This is a slow step so best to do once in preprocessing
+Prepare raw (filtered) NIS data for use in models
 """
 import pandas as pd
-from nisicd.dataProcessing import get_dx_cols, dm_startswith_cods
+from nisicd import logging
+from nisicd.dataProcessing import get_dx_cols, categorical_lookup, ssi_codes
 
 
 if __name__ == "__main__":
+    df_in = pd.read_parquet("cache/filtered.parquet")
 
-    df = pd.read_parquet("cache/filtered.parquet")
-    dx_cols = get_dx_cols(df.columns)
+    df_out = pd.DataFrame()
 
-    def get_dm(row):
-        for c in dm_startswith_cods:
-            if row.str.startswith(c).any():
-                return True
+    copy_cols = [
+        "AGE",
+        "APRDRG_Severity",
+        "APRDRG_Risk_Mortality",
+        "DIED",
+        "PAY1",
+        "RACE",
+        "FEMALE",
+        "HOSP_LOCTEACH",
+        "HOSP_REGION",
+    ]
 
-        return False
+    # FEMALE, RACE may have NAs
+    df_in["FEMALE"] = df_in["FEMALE"].fillna(2)
+    df_in["RACE"] = df_in["RACE"].fillna(7)
 
-    df["has_DM"] = df[dx_cols].apply(get_dm, axis=1)
+    for cc in copy_cols:
+        df_out[cc] = df_in[cc].astype(int)
 
-    df.to_parquet("cache/processed.parquet", index=False)
+    df_out["INCOME_QRTL"] = df_in["ZIPINC_QRTL"].fillna(df_in["ZIPINC"])
+    assert not df_out["INCOME_QRTL"].isna().any()
+    df_out["INCOME_QRTL"] = df_out["INCOME_QRTL"].astype(int)
+
+    # Prolonged LOS
+    df_out["PROLONGED_LOS"] = df_in["LOS"] > 4
+
+    # OR return
+    df_out["OR_RETURN"] = (df_in["I10_NPR"].fillna(0) + df_in["NPR"].fillna(0)) > 1
+
+    # SSI
+    dx_cols = get_dx_cols(df_in.columns)
+    df_out["SSI"] = df_in[dx_cols].isin(ssi_codes).any("columns")
+
+    for key, lookup_table in categorical_lookup.items():
+        # FEMALE is 0, 1, but all other columns don't have a 0 val
+        if key == "SEX":
+            df_out["FEMALE"] = df_out["FEMALE"].apply(lambda x: lookup_table[x])
+        else:
+            df_out[key] = df_out[key].apply(lambda x: lookup_table[x - 1])
+
+    df_out = df_out.rename(columns={"FEMALE": "SEX"})
+
+    df_out.to_parquet("cache/processed.parquet", index=False)
+    df_out.to_csv("cache/processed.csv", index=False)
