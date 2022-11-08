@@ -13,7 +13,7 @@ def make_cell_bold(cell):
 def make_t1(df: pd.DataFrame, savename: str):
 
     # TODO: oooof
-    # categorical_lookup["INCOME_QRTL"] = list(range(1, 5))
+    categorical_lookup["INCOME_QRTL"] = list(range(1, 5))
 
     doc = docx.Document()
     table_doc = doc.add_table(rows=1, cols=2)
@@ -23,8 +23,6 @@ def make_t1(df: pd.DataFrame, savename: str):
     header_row = table_doc.row_cells(0)
     header_row[0].text = "Demographics and Preoperative Characteristics"
     header_row[1].text = "N (%)"
-
-    categoricals = df[[c for c in df.columns if c in categorical_lookup]]
 
     table1_df = pd.DataFrame()
 
@@ -71,12 +69,12 @@ def make_t1(df: pd.DataFrame, savename: str):
         row[0].text = f"{aprdrg_col} > 2"
         row[1].text = as_str
 
-    for variable_name in categoricals.columns:
+    for variable_name in categorical_lookup.keys():
         row = table_doc.add_row().cells
         row[0].text = variable_name
         make_cell_bold(row[0])
 
-        vc = categoricals[variable_name].value_counts()
+        vc = df[variable_name].value_counts().sort_index()
 
         def format_n(n):
             percent = n / len(df) * 100
