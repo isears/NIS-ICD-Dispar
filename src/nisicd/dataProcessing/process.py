@@ -4,6 +4,28 @@ Prepare raw (filtered) NIS data for use in models
 import pandas as pd
 from nisicd import logging
 from nisicd.dataProcessing import get_dx_cols, categorical_lookup, ssi_codes
+import json
+from nisicd.cci import CCI
+
+
+def get_cci_score(codes):
+    score = 0
+
+    # drop empty columns
+    codes_revised = [c for c in codes if c is not None]
+
+    for code in codes_revised:
+        for cci_category, cci_data in CCI.items():
+            match_codes = cci_data["Match Codes"]
+            startswith_codes = cci_data["Startswith Codes"]
+
+            if code in match_codes:
+                score += cci_data["Points"]
+
+            elif any(code.startswith(swcode) for swcode in startswith_codes):
+                score += cci_data["Points"]
+
+    return score
 
 
 if __name__ == "__main__":
@@ -52,6 +74,11 @@ if __name__ == "__main__":
             df_out[key] = df_out[key].apply(lambda x: lookup_table[x - 1])
 
     df_out = df_out.rename(columns={"FEMALE": "SEX"})
+
+    # Get CCI score
+    df_out["cci_score"] = df_in[dx_cols].apply(
+        lambda row: get_cci_score(row.to_list()), axis=1
+    )
 
     df_out.to_parquet("cache/processed.parquet", index=False)
     df_out.to_csv("cache/processed.csv", index=False)
