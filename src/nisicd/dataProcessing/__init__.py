@@ -105,3 +105,22 @@ categorical_lookup = {
     # ],
     "HOSP_REGION": ["Northeast", "Midwest", "South", "West"],
 }
+
+composite_comorbidities = {
+    "AIDS": ("CMR_AIDS", "CM_AIDS"),
+    "ALCOHOL": ("CMR_ALCOHOL", "CM_ALCOHOL"),
+    "ARTHRITIS": ("CMR_ARTH", "CM_ARTH"),
+    "CANCER, LYMPHOMA": ("CMR_CANCER_LYMPH", "CM_LYMPH"),
+    "CANCER, METASTATIC": ("CMR_CANCER_METS", "CM_METS"),
+    "CANCER, SOLID": ("CMR_CANCER_SOLID", "CM_TUMOR"),
+    "DEPRESSION": ("CMR_DEPRESS", "CM_DEPRESS"),
+    "DIABETES, UNCOMPLICATED": ("CMR_DIAB_UNCX", "CM_DM"),
+    "DIABETES, COMPLICATED": ("CMR_DIAB_CX", "CM_DMCX"),
+    # Hack to combine columns, will have to handled in processor
+    "HYPERTENSION 1": ("CMR_HTN_UNCX", "CM_HTN_C"),
+    "HYPERTENSION 2": ("CMR_HTN_CX", "CM_HTN_C"),
+    "CHRONIC LUNG": ("CMR_LUNG_CHRONIC", "CM_CHRNLUNG"),
+    "OBESITY": ("CMR_OBESE", "CM_OBESE"),
+    "PERIPHERAL VASCULAR": ("CMR_PERIVASC", "CM_PERIVASC"),
+    "HYPOTHYROIDISM": ("CMR_THYROID_HYPO", "CM_HYPOTHY"),
+}

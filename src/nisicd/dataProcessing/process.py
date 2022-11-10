@@ -3,7 +3,12 @@ Prepare raw (filtered) NIS data for use in models
 """
 import pandas as pd
 from nisicd import logging
-from nisicd.dataProcessing import get_dx_cols, categorical_lookup, ssi_codes
+from nisicd.dataProcessing import (
+    get_dx_cols,
+    categorical_lookup,
+    ssi_codes,
+    composite_comorbidities,
+)
 import json
 from nisicd.cci import CCI
 
@@ -79,6 +84,15 @@ if __name__ == "__main__":
     df_out["cci_score"] = df_in[dx_cols].apply(
         lambda row: get_cci_score(row.to_list()), axis=1
     )
+
+    # Build composite comorbidities
+    for new_col, (cmr_col, cm_col) in composite_comorbidities.items():
+        # If there's not at least 1, we probably got the column name wrong
+        assert df_in[cmr_col].fillna(0).sum() > 0
+        assert df_in[cm_col].fillna(0).sum() > 0
+
+        df_out[new_col] = df_in[cmr_col].fillna(0) + df_in[cm_col].fillna(0)
+        df_out[new_col] = df_out[new_col].astype(int)
 
     df_out.to_parquet("cache/processed.parquet", index=False)
     df_out.to_csv("cache/processed.csv", index=False)

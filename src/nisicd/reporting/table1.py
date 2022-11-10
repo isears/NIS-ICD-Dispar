@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import docx
-from nisicd.dataProcessing import categorical_lookup
+from nisicd.dataProcessing import categorical_lookup, composite_comorbidities
 
 
 def make_cell_bold(cell):
@@ -92,7 +92,13 @@ def make_t1(df: pd.DataFrame, savename: str):
             row[0].text = str(subcat)
             row[1].text = format_n(n)
 
-    for outcome_col in ["SSI", "PROLONGED_LOS", "DIED", "OR_RETURN"]:
+    # TODO: make it more clear what's going on here (outcomes + comorbidities done in the same way)
+    for outcome_col in [
+        "SSI",
+        "PROLONGED_LOS",
+        "DIED",
+        "OR_RETURN",
+    ] + list(composite_comorbidities.keys()):
         positive_count = df[outcome_col].sum()
         as_str = f"{positive_count:,} ({100 * positive_count / len(df):.2f})"
         table1_df = pd.concat(
