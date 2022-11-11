@@ -40,7 +40,8 @@ class InclusionCriteria:
 
     @staticmethod
     def _ic_age(df_in: pd.DataFrame) -> pd.DataFrame:
-        # return df_in[df_in["AGE"] >= 18]
+        # df_in = df_in[df_in["AGE"] < 65]
+        # df_in = df_in[df_in["AGE"] > 18]
         return df_in
 
     @staticmethod
