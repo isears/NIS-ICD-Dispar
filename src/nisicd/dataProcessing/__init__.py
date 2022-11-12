@@ -1,6 +1,35 @@
 import re
 
-ssi_codes = ["99859", "T8149XA", "T8141XA"]
+ssi_codes = [
+    "9985",
+    "99851",
+    "99859",
+    "T814",
+    "T8140",
+    "T8140XA",
+    "T8140XD",
+    "T8140XS",
+    "T8141",
+    "T8141XA",
+    "T8141XD",
+    "T8141XS",
+    "T8142",
+    "T8142XA",
+    "T8142XS",
+    "T8142XD",
+    "T8143",
+    "T8143XA",
+    "T8143XS",
+    "T8143XD",
+    "T8144",
+    "T8144XA",
+    "T8144XS",
+    "T8144XD",
+    "T8149",
+    "T8149XA",
+    "T8149XS",
+    "T8149XD",
+]
 
 dm_startswith_cods = ["6480", "249", "250", "E08", "E09", "E10", "E11", "E13"]
 
@@ -40,18 +69,22 @@ DX_CODES = {
         "K3533",
     ],
     "acute_cholecystitis": ["5750", "K810"],
-    # "perforated_diverticulitis": [
-    #     "56213",
-    #     "56203",
-    #     "K5700",
-    #     "K5701",
-    #     "K570",
-    #     "K573",
-    #     "K5730",
-    #     "K5731",
-    #     "K5732",
-    #     "K5733",
-    # ],
+    "perforated_diverticulitis": [
+        "56213",
+        "56203",
+        "K5700",
+        "K5701",
+        "K570",
+        "K572",
+        "K5720",
+        "K5721",
+        "K574",
+        "K5740",
+        "K5741",
+        "K578",
+        "K5780",
+        "K5781",
+    ],
     # "nonperforated_diverticulitis": ["56211"]
     # "acute_perforated_duodenal_ulcer": ["5321"],  # Acute perforated duodenal ulcer
     # "postoperative_infection": ["9985", "99851", "99859"]

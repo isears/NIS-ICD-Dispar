@@ -65,7 +65,9 @@ if __name__ == "__main__":
         pvals = res.pvalues
         assert "InsuranceStatus" in pvals.index[0]
 
-        logging.info(f"Adjusted p-values (insured vs uninsured): {pvals[0]}")
+        logging.info(
+            f"{drg_col} adjusted p-values (insured, {insured_avg:.2f} vs uninsured, {uninsured_avg:.2f}): {pvals[0]}"
+        )
 
     for outcome_col in ["SSI", "DIED", "PROLONGED_LOS", "OR_RETURN"]:
         assert insured_df[outcome_col].apply(lambda x: x == 0 or x == 1).all()
@@ -85,7 +87,14 @@ if __name__ == "__main__":
         lr_df = combined_df
         lr_df[outcome_col] = lr_df[outcome_col].astype(int)
         lr = sm.logit(formula_str, data=lr_df)
-        res = lr.fit(disp=0)
+
+        try:
+            res = lr.fit(disp=0)
+        except np.linalg.LinAlgError as e:
+            logging.warning(
+                f"LR fit failed ({e}) for {outcome_col}. Attempting regularized fit"
+            )
+            res = lr.fit_regularized(disp=0)
 
         odds_ratios = np.exp(res.params)
         lower_ci = np.exp(res.conf_int()[0])
