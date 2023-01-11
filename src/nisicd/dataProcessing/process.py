@@ -8,6 +8,7 @@ from nisicd.dataProcessing import (
     categorical_lookup,
     ssi_codes,
     composite_comorbidities,
+    DX_CODES,
 )
 import json
 from nisicd.cci import CCI
@@ -61,9 +62,6 @@ if __name__ == "__main__":
     assert not df_out["INCOME_QRTL"].isna().any()
     df_out["INCOME_QRTL"] = df_out["INCOME_QRTL"].astype(int)
 
-    # Prolonged LOS
-    df_out["PROLONGED_LOS"] = df_in["LOS"] > 4
-
     # OR return
     df_out["OR_RETURN"] = (df_in["I10_NPR"].fillna(0) + df_in["NPR"].fillna(0)) > 1
 
@@ -93,6 +91,41 @@ if __name__ == "__main__":
 
         df_out[new_col] = df_in[cmr_col].fillna(0) + df_in[cm_col].fillna(0)
         df_out[new_col] = df_out[new_col].astype(int)
+
+    # Get presenting dx
+    def get_presenting_dx(row):
+        if "I10_DX1" in row and row["I10_DX1"] != "" and row["I10_DX1"] is not None:
+            code = row["I10_DX1"]
+
+        elif "DX1" in row and row["DX1"] != "" and row["DX1"] is not None:
+            code = row["DX1"]
+        else:
+            raise ValueError(f"No initial Dx for row: {row}")
+
+        for key, val in DX_CODES.items():
+            if code in val:
+                return key
+        else:
+            raise ValueError(f"Couldn't find dx {code}")
+
+    df_in["condition"] = df_in[dx_cols].apply(get_presenting_dx, axis=1)
+    df_out["condition"] = df_in["condition"]
+
+    # Prolonged LOS
+    def set_prolonged_los(row):
+        """
+        Set based on 90th percentile for each condition
+        """
+        if row["condition"] == "acute_appendicitis":
+            return int(row["LOS"] > 5)
+        elif row["condition"] == "acute_cholecystitis":
+            return int(row["LOS"] > 6)
+        elif row["condition"] == "perforated_diverticulitis":
+            return int(row["LOS"] > 9)
+        else:
+            raise ValueError(f"Invalid condition: {row['condition']}")
+
+    df_out["PROLONGED_LOS"] = df_in.apply(set_prolonged_los, axis=1)
 
     df_out.to_parquet("cache/processed.parquet", index=False)
     df_out.to_csv("cache/processed.csv", index=False)

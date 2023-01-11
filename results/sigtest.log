@@ -1,0 +1,13 @@
+2022-11-13 19:13:00 Hera root[1846311] INFO # of admissions in insured group: 189037
+2022-11-13 19:13:00 Hera root[1846311] INFO # of admissions in uninsured group: 43373
+2022-11-13 19:18:29 Hera root[1846311] INFO APRDRG_Severity adjusted p-values (insured, 1.52 vs uninsured, 1.47): 0.008331945876786921
+2022-11-13 19:26:00 Hera root[1846311] INFO APRDRG_Risk_Mortality adjusted p-values (insured, 1.11 vs uninsured, 1.09): 0.5734337672958547
+2022-11-13 19:40:32 Hera root[1846311] INFO cci_score adjusted p-values (insured, 0.31 vs uninsured, 0.19): 1.7563056608475286e-26
+2022-11-13 19:40:36 Hera root[1846311] INFO Adjusted odds ratio for SSI: 0.80, (p 0.01203)
+/home/isears/VirtualEnvironments/surge/lib/python3.8/site-packages/statsmodels/base/model.py:604: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
+  warnings.warn("Maximum Likelihood optimization failed to "
+/home/isears/VirtualEnvironments/surge/lib/python3.8/site-packages/pandas/core/arraylike.py:364: RuntimeWarning: overflow encountered in exp
+  result = getattr(ufunc, method)(*inputs, **kwargs)
+2022-11-13 19:40:41 Hera root[1846311] INFO Adjusted odds ratio for DIED: 0.56, (p 0.01187)
+2022-11-13 19:40:45 Hera root[1846311] INFO Adjusted odds ratio for PROLONGED_LOS: 0.82, (p 0.00000)
+2022-11-13 19:40:49 Hera root[1846311] INFO Adjusted odds ratio for OR_RETURN: 1.00, (p 0.72958)

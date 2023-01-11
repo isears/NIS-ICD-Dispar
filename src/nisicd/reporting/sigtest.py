@@ -1,17 +1,17 @@
 """
 Test for significance of differences
 """
-import pandas as pd
+import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import ttest_ind
-from statsmodels.stats.proportion import proportions_ztest
-from nisicd.reporting import make_crosstab
+import pandas as pd
+import seaborn as sns
 import statsmodels.formula.api as sm
+from scipy.stats import ttest_ind
 from statsmodels.miscmodels.ordinal_model import OrderedModel
-
+from statsmodels.stats.proportion import proportions_ztest
 
 from nisicd import logging
-
+from nisicd.reporting import make_crosstab
 
 if __name__ == "__main__":
     all_df = pd.read_parquet("cache/processed.parquet")
@@ -35,6 +35,7 @@ if __name__ == "__main__":
         "C(HOSP_LOCTEACH)",
         "C(HOSP_REGION)",
         "C(INCOME_QRTL)",
+        "C(condition)",
         "AGE",
     ]
 
@@ -68,6 +69,11 @@ if __name__ == "__main__":
         logging.info(
             f"{drg_col} adjusted p-values (insured, {insured_avg:.2f} vs uninsured, {uninsured_avg:.2f}): {pvals[0]}"
         )
+
+    ors = list()
+    upper_cis = list()
+    lower_cis = list()
+    ps = list()
 
     for outcome_col in ["SSI", "DIED", "PROLONGED_LOS", "OR_RETURN"]:
         assert insured_df[outcome_col].apply(lambda x: x == 0 or x == 1).all()
@@ -106,5 +112,38 @@ if __name__ == "__main__":
         assert "InsuranceStatus" in pvals.index[1]
 
         logging.info(
-            f"Adjusted odds ratio for {outcome_col}: {odds_ratios[1]:.2f}, (p {pvals[1]:.5f})"
+            f"Adjusted odds ratio for {outcome_col}: {odds_ratios[1]:.2f} [{lower_ci[1]:.2f}, {upper_ci[1]:.2f}], (p {pvals[1]:.5f})"
         )
+
+        ors.append(odds_ratios[1])
+        lower_cis.append(lower_ci[1])
+        upper_cis.append(upper_ci[1])
+        ps.append(pvals[1])
+
+    plottable_df = pd.DataFrame(
+        data={
+            "Outcomes": [
+                "Surgical Site Infection",
+                "In-hospital Mortality",
+                "Prolonged Length of Stay",
+                "Reoperation",
+            ],
+            "OR": ors,
+            "lower_ci": lower_cis,
+            "upper_ci": upper_cis,
+            "pval": ps,
+        }
+    )
+
+    sns.set_theme()
+    ax = sns.pointplot(
+        data=plottable_df,
+        x="OR",
+        y="Outcomes",
+        errorbar=("lower_ci", "upper_ci"),
+        capsize=0.4,
+        join=False,
+        color=".5",
+    )
+
+    plt.savefig("results/forestplot.png", bbox_inches="tight")
