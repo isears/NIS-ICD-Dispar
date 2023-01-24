@@ -5,6 +5,7 @@ Apply study inclusion criteria:
 - Procedure codes of interest
 """
 import pandas as pd
+
 from nisicd import logging
 from nisicd.dataProcessing import get_dx_cols
 
@@ -47,6 +48,12 @@ class InclusionCriteria:
     @staticmethod
     def _ic_tranout(df_in: pd.DataFrame) -> pd.DataFrame:
         return df_in[df_in["TRAN_OUT"] == 0]
+
+    @staticmethod
+    def _ic_aprdrgs(df_in: pd.DataFrame) -> pd.DataFrame:
+        return df_in[
+            (df_in["APRDRG_Severity"] > 0) & (df_in["APRDRG_Risk_Mortality"] > 0)
+        ]
 
     def apply_ic(self) -> pd.DataFrame:
         ic_methods = [m for m in dir(self) if m.startswith("_ic")]
