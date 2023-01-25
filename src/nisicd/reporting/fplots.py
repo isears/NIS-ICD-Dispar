@@ -18,22 +18,26 @@ if __name__ == "__main__":
         )
 
         # Insurance status should be first
-        assert results.index[0].startswith("C(InsuranceStatus,")
+        assert results.index[1].startswith("C(InsuranceStatus,")
 
         results["variable"] = comorbidity_measure
-        plottable_df = plottable_df.append(results.iloc[0], ignore_index=True)
+        plottable_df = plottable_df.append(results.iloc[1], ignore_index=True)
 
     print("Done")
 
-    fp.forestplot(
-        plottable_df,
-        estimate="odds_ratio",
-        varlabel="variable",
-        ll="lower_ci",
-        hl="upper_ci",
-        pval="pval",
-        sort=True,
-        color_alt_rows=True,
+    plt.figure(figsize=(10, 1), dpi=150)
+    plt.errorbar(
+        x=plottable_df["odds_ratio"].to_numpy(),
+        y=plottable_df["variable"].to_numpy(),
+        xerr=plottable_df[["lower_ci", "upper_ci"]].transpose().to_numpy(),
+        color="black",
+        capsize=3,
+        linestyle="None",
+        linewidth=1,
+        marker="o",
+        markersize=5,
+        mfc="black",
+        mec="black",
     )
 
     plt.savefig("results/fig1.png", bbox_inches="tight")
