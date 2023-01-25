@@ -13,13 +13,37 @@ from statsmodels.stats.proportion import proportions_ztest
 from nisicd import logging
 from nisicd.reporting import make_crosstab
 
+
+def save_results(name: str, res_object):
+    """
+    Because SM won't pickle
+    """
+    odds_ratios = np.exp(res.params)
+    lower_ci = np.exp(res.conf_int()[0])
+    upper_ci = np.exp(res.conf_int()[1])
+    pvals = res.pvalues
+
+    res_out = pd.DataFrame(
+        {
+            "odds_ratio": odds_ratios,
+            "lower_ci": lower_ci,
+            "upper_ci": upper_ci,
+            "pval": pvals,
+        }
+    )
+
+    res_out.to_csv(f"results/{name}_regression.csv")
+
+    return res_out
+
+
 if __name__ == "__main__":
     all_df = pd.read_parquet("cache/processed.parquet")
 
     # Binarize outcome columns so that we can just do logistic regression
-    # all_df["APRDRG_Severity"] = (all_df["APRDRG_Severity"] > 2).astype(int)
-    # all_df["APRDRG_Risk_Mortality"] = (all_df["APRDRG_Risk_Mortality"] > 2).astype(int)
-    # all_df["cci_score"] = (all_df["cci_score"] > 0).astype(int)
+    all_df["APRDRG_Severity"] = (all_df["APRDRG_Severity"] > 1).astype(int)
+    all_df["APRDRG_Risk_Mortality"] = (all_df["APRDRG_Risk_Mortality"] > 1).astype(int)
+    all_df["cci_score"] = (all_df["cci_score"] > 0).astype(int)
 
     insured_df = all_df[all_df["PAY1"] == "Private insurance"]
     uninsured_df = all_df[(all_df["PAY1"] == "Self-pay")]
@@ -60,20 +84,20 @@ if __name__ == "__main__":
         )
 
         formula_str += " + ".join(controllable_vars)
-        res = OrderedModel.from_formula(formula_str, combined_df, distr="probit").fit(
-            method="bfgs", disp=0
-        )
+        # res = OrderedModel.from_formula(formula_str, combined_df, distr="probit").fit(
+        #     method="bfgs", disp=0
+        # )
+        res = sm.logit(formula_str, combined_df).fit()
         pvals = res.pvalues
-        assert "InsuranceStatus" in pvals.index[0]
+        assert "InsuranceStatus" in pvals.index[1]
 
         logging.info(
             f"{drg_col} adjusted p-values (insured, {insured_avg:.2f} vs uninsured, {uninsured_avg:.2f}): {pvals[0]}"
         )
 
-    ors = list()
-    upper_cis = list()
-    lower_cis = list()
-    ps = list()
+        out_df = save_results(drg_col, res)
+
+        print(out_df)
 
     for outcome_col in ["SSI", "DIED", "PROLONGED_LOS", "OR_RETURN"]:
         assert insured_df[outcome_col].apply(lambda x: x == 0 or x == 1).all()
@@ -115,35 +139,4 @@ if __name__ == "__main__":
             f"Adjusted odds ratio for {outcome_col}: {odds_ratios[1]:.2f} [{lower_ci[1]:.2f}, {upper_ci[1]:.2f}], (p {pvals[1]:.5f})"
         )
 
-        ors.append(odds_ratios[1])
-        lower_cis.append(lower_ci[1])
-        upper_cis.append(upper_ci[1])
-        ps.append(pvals[1])
-
-    plottable_df = pd.DataFrame(
-        data={
-            "Outcomes": [
-                "Surgical Site Infection",
-                "In-hospital Mortality",
-                "Prolonged Length of Stay",
-                "Reoperation",
-            ],
-            "OR": ors,
-            "lower_ci": lower_cis,
-            "upper_ci": upper_cis,
-            "pval": ps,
-        }
-    )
-
-    sns.set_theme()
-    ax = sns.pointplot(
-        data=plottable_df,
-        x="OR",
-        y="Outcomes",
-        errorbar=("lower_ci", "upper_ci"),
-        capsize=0.4,
-        join=False,
-        color=".5",
-    )
-
-    plt.savefig("results/forestplot.png", bbox_inches="tight")
+        save_results(outcome_col, res)
