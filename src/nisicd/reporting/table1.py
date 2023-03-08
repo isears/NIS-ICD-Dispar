@@ -16,8 +16,16 @@ if __name__ == "__main__":
         lambda x: string.capwords(x.replace("_", " "))
     )
 
+    processed_df["CCI > 0"] = processed_df["cci_score"] > 0
+
+    combined_df = processed_df[
+        (processed_df["PAY1"] == "Private insurance")
+        | (processed_df["PAY1"] == "Self-pay")
+    ]
     insured_df = processed_df[processed_df["PAY1"] == "Private insurance"]
     uninsured_df = processed_df[processed_df["PAY1"] == "Self-pay"]
+
+    assert len(combined_df) == (len(insured_df) + len(uninsured_df))
 
     @dataclass
     class T1Column:
@@ -36,6 +44,7 @@ if __name__ == "__main__":
         T1Column("APRDRG_Severity", "APRDRG Severity", "categorical"),
         T1Column("APRDRG_Risk_Mortality", "APRDRG Risk Mortality", "categorical"),
         T1Column("cci_score", "CCI Score", "continuous"),
+        T1Column("CCI > 0", "CCI > 0", "binary"),
         T1Column("DIED", "In-hospital Mortality", "binary"),
         T1Column("OR_RETURN", "Reoperation", "binary"),
         T1Column("PROLONGED_LOS", "Prolonged LOS", "binary"),
@@ -45,7 +54,7 @@ if __name__ == "__main__":
     dt = DocTable(
         [
             "Characteristic",
-            f"All (n={len(processed_df)})",
+            f"All (n={len(combined_df)})",
             f"Private Insurance Group (n={len(insured_df)})",
             f"Self-pay Group (n={len(uninsured_df)})",
         ]
@@ -54,8 +63,8 @@ if __name__ == "__main__":
     for t1_col in ordered_t1_columns:
 
         if t1_col.type == "continuous":
-            all_mean = processed_df[t1_col.df_col].mean()
-            all_std = processed_df[t1_col.df_col].std()
+            all_mean = combined_df[t1_col.df_col].mean()
+            all_std = combined_df[t1_col.df_col].std()
 
             insured_mean = insured_df[t1_col.df_col].mean()
             insured_std = insured_df[t1_col.df_col].std()
@@ -75,7 +84,7 @@ if __name__ == "__main__":
         elif t1_col.type == "categorical":
             dt.add_row([t1_col.name])
 
-            all_vcs = processed_df[t1_col.df_col].value_counts().sort_index().to_dict()
+            all_vcs = combined_df[t1_col.df_col].value_counts().sort_index().to_dict()
             insured_vcs = (
                 insured_df[t1_col.df_col].value_counts().sort_index().to_dict()
             )
@@ -93,23 +102,23 @@ if __name__ == "__main__":
                 dt.add_row(
                     [
                         f"  {label}",
-                        f"{all_count} ({100* all_count / len(processed_df):.2f})",
+                        f"{all_count} ({100* all_count / len(combined_df):.2f})",
                         f"{insured_vcs[label]} ({100* insured_vcs[label] / len(insured_df):.2f})",
                         f"{uninsured_vcs[label]} ({100*uninsured_vcs[label] / len(uninsured_df):.2f})",
                     ]
                 )
         elif t1_col.type == "binary":
-            for df in [processed_df, insured_df, uninsured_df]:
+            for df in [combined_df, insured_df, uninsured_df]:
                 assert df[t1_col.df_col].apply(lambda x: x == 1 or x == 0).all()
 
-            all_count = processed_df[t1_col.df_col].sum()
+            all_count = combined_df[t1_col.df_col].sum()
             insured_count = insured_df[t1_col.df_col].sum()
             uninsured_count = uninsured_df[t1_col.df_col].sum()
 
             dt.add_row(
                 [
                     t1_col.name,
-                    f"{all_count} ({100 * all_count / len(processed_df):.2f})",
+                    f"{all_count} ({100 * all_count / len(combined_df):.2f})",
                     f"{insured_count} ({100 * insured_count / len(insured_df):.2f})",
                     f"{uninsured_count} ({100 * uninsured_count / len(uninsured_df):.2f})",
                 ]
